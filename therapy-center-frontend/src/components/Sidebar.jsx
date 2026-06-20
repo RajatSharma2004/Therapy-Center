@@ -10,12 +10,14 @@ const ROLE_LINKS = {
     { to: '/admin/slots', label: 'Generate Slots', icon: '📅' },
     { to: '/admin/patients', label: 'Patients', icon: '🧑‍🤝‍🧑' },
     { to: '/admin/appointments', label: 'Appointments', icon: '📋' },
+    { to: '/chat', label: 'Staff Chat', icon: '💬' },
   ],
   Receptionist: [
     { to: '/staff', label: 'Dashboard', icon: '🏠' },
     { to: '/staff/patients', label: 'Patients', icon: '🧑‍🤝‍🧑' },
     { to: '/staff/appointments', label: 'Appointments', icon: '📋' },
     { to: '/staff/book', label: 'Book Appt', icon: '➕' },
+    { to: '/chat', label: 'Staff Chat', icon: '💬' },
   ],
   Doctor: [
     { to: '/doctor', label: 'Dashboard', icon: '🏠' },

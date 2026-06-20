@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using System.Data.Common;
 using System.Text;
 using System.Text.Json.Serialization;
 using TherapyCenter.Data;
@@ -9,6 +8,7 @@ using TherapyCenter.Repositories.Implementations;
 using TherapyCenter.Repositories.Interfaces;
 using TherapyCenter.Services.Implementations;
 using TherapyCenter.Services.Interfaces;
+using TherapyCenter.Hubs;
 
 namespace TherapyCenter
 {
@@ -18,12 +18,14 @@ namespace TherapyCenter
         {
             var builder = WebApplication.CreateBuilder(args);
 
-            // ── 1. MySQL via Pomelo ───────────────────────────────────────────────────────
+            // Database
             var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-            builder.Services.AddDbContext<AppDbContext>(options =>
-                options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
 
-            // ── 2. JWT Authentication ─────────────────────────────────────────────────────
+            builder.Services.AddDbContext<AppDbContext>(options =>
+                options.UseMySql(connectionString,
+                    ServerVersion.AutoDetect(connectionString)));
+
+            // JWT Authentication
             var jwtSettings = builder.Configuration.GetSection("JwtSettings");
             var secretKey = jwtSettings["SecretKey"]!;
 
@@ -42,22 +44,55 @@ namespace TherapyCenter
                     ValidateIssuerSigningKey = true,
                     ValidIssuer = jwtSettings["Issuer"],
                     ValidAudience = jwtSettings["Audience"],
-                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey))
+                    IssuerSigningKey =
+                        new SymmetricSecurityKey(
+                            Encoding.UTF8.GetBytes(secretKey))
+                };
+
+                // SignalR JWT Support
+                options.Events = new JwtBearerEvents
+                {
+                    OnMessageReceived = context =>
+                    {
+                        var accessToken =
+                            context.Request.Query["access_token"];
+
+                        var path = context.HttpContext.Request.Path;
+
+                        if (!string.IsNullOrEmpty(accessToken) &&
+                            path.StartsWithSegments("/hubs/chat"))
+                        {
+                            context.Token = accessToken;
+                        }
+
+                        return Task.CompletedTask;
+                    }
                 };
             });
 
-            // ── 3. Authorization Policies ─────────────────────────────────────────────────
+            // Authorization Policies
             builder.Services.AddAuthorization(options =>
             {
-                options.AddPolicy("AdminOnly", p => p.RequireRole("Admin"));
-                options.AddPolicy("StaffOnly", p => p.RequireRole("Admin", "Receptionist"));
-                options.AddPolicy("DoctorOnly", p => p.RequireRole("Doctor"));
-                options.AddPolicy("PatientAccess", p => p.RequireRole("Patient", "Guardian"));
-                options.AddPolicy("PatientCreateAccess", p =>p.RequireRole("Admin", "Receptionist", "Guardian"));
-                options.AddPolicy("AllStaff", p => p.RequireRole("Admin", "Receptionist", "Doctor"));
+                options.AddPolicy("AdminOnly",
+                    p => p.RequireRole("Admin"));
+
+                options.AddPolicy("StaffOnly",
+                    p => p.RequireRole("Admin", "Receptionist"));
+
+                options.AddPolicy("DoctorOnly",
+                    p => p.RequireRole("Doctor"));
+
+                options.AddPolicy("PatientAccess",
+                    p => p.RequireRole("Patient", "Guardian"));
+
+                options.AddPolicy("PatientCreateAccess",
+                    p => p.RequireRole("Admin", "Receptionist", "Guardian"));
+
+                options.AddPolicy("AllStaff",
+                    p => p.RequireRole("Admin", "Receptionist", "Doctor"));
             });
 
-            // ── 4. Repositories ───────────────────────────────────────────────────────────
+            // Repositories
             builder.Services.AddScoped<IUserRepository, UserRepository>();
             builder.Services.AddScoped<IPatientRepository, PatientRepository>();
             builder.Services.AddScoped<ITherapyRepository, TherapyRepository>();
@@ -66,11 +101,12 @@ namespace TherapyCenter
             builder.Services.AddScoped<IFindingRepository, FindingRepository>();
             builder.Services.AddScoped<IPaymentRepository, PaymentRepository>();
             builder.Services.AddScoped<ISlotRepository, SlotRepository>();
+            builder.Services.AddScoped<IChatRepository, ChatRepository>();
 
-            // ── 5. Unit of Work ───────────────────────────────────────────────────────────
+            // Unit Of Work
             builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
-            // ── 6. Services ───────────────────────────────────────────────────────────────
+            // Services
             builder.Services.AddScoped<IAuthService, AuthService>();
             builder.Services.AddScoped<IAdminService, AdminService>();
             builder.Services.AddScoped<IAppointmentService, AppointmentService>();
@@ -79,23 +115,30 @@ namespace TherapyCenter
             builder.Services.AddScoped<ISlotService, SlotService>();
             builder.Services.AddScoped<IPaymentService, PaymentService>();
             builder.Services.AddScoped<IFindingService, FindingService>();
+            builder.Services.AddScoped<IChatService, ChatService>();
 
-            // ── 7. CORS ───────────────────────────────────────────────────────────────────
+            // SignalR
+            builder.Services.AddSignalR();
+
+            // CORS
             builder.Services.AddCors(options =>
             {
                 options.AddPolicy("AllowFrontend", policy =>
                 {
                     policy.WithOrigins("http://localhost:5173")
                           .AllowAnyHeader()
-                          .AllowAnyMethod();
+                          .AllowAnyMethod()
+                          .AllowCredentials();
                 });
             });
 
             builder.Services.AddControllers()
                 .AddJsonOptions(options =>
                 {
-                    options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+                    options.JsonSerializerOptions.ReferenceHandler =
+                        ReferenceHandler.IgnoreCycles;
                 });
+
             builder.Services.AddEndpointsApiExplorer();
 
             var app = builder.Build();
@@ -103,19 +146,15 @@ namespace TherapyCenter
             app.UseCors("AllowFrontend");
 
             app.UseHttpsRedirection();
+
             app.UseAuthentication();
             app.UseAuthorization();
+
             app.MapControllers();
+
+            app.MapHub<ChatHub>("/hubs/chat");
+
             app.Run();
         }
-
     }
 }
-
-
-
-
-
-
-
-

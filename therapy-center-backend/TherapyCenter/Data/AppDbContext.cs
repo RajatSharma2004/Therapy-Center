@@ -16,6 +16,7 @@ namespace TherapyCenter.Data
         public DbSet<DoctorFinding> DoctorFindings => Set<DoctorFinding>();
         public DbSet<Payment> Payments => Set<Payment>();
         public DbSet<Slot> Slots => Set<Slot>();
+        public DbSet<ChatMessage> ChatMessages => Set<ChatMessage>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -129,6 +130,18 @@ namespace TherapyCenter.Data
                 e.HasKey(t => t.TherapyId);
                 e.Property(t => t.Name).HasMaxLength(100).IsRequired();
                 e.Property(t => t.Cost).HasPrecision(10, 2);
+            });
+
+            // ── ChatMessage ───────────────────────────────────────────────────
+            modelBuilder.Entity<ChatMessage>(e =>
+            {
+                e.HasKey(m => m.Id);
+                e.Property(m => m.Message).HasMaxLength(1000).IsRequired();
+
+                e.HasOne(m => m.Sender)
+                 .WithMany()
+                 .HasForeignKey(m => m.SenderId)
+                 .OnDelete(DeleteBehavior.Cascade);
             });
         }
     }

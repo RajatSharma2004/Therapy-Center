@@ -1,5 +1,6 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from './context/AuthContext'
+import { ChatProvider } from './context/ChatContext'
 import Sidebar from './components/Sidebar'
 import ProtectedRoute from './components/ProtectedRoute'
 
@@ -31,6 +32,7 @@ import PatientAppointments from './pages/patient/PatientAppointments'
 
 // Shared
 import BookAppointment from './pages/BookAppointment'
+import ChatPage from './pages/ChatPage'
 
 function RootRedirect() {
   const { user } = useAuth()
@@ -214,6 +216,17 @@ function AppLayout() {
             }
           />
 
+          {/* ================= CHAT ================= */}
+
+          <Route
+            path="/chat"
+            element={
+              <ProtectedRoute roles={['Admin', 'Receptionist']}>
+                <ChatPage />
+              </ProtectedRoute>
+            }
+          />
+
           {/* ================= FALLBACK ================= */}
 
           <Route path="*" element={<Navigate to="/" replace />} />
@@ -241,6 +254,7 @@ function AuthGate() {
 export default function App() {
   return (
     <AuthProvider>
+      <ChatProvider>
       <Routes>
 
         {/* Public Routes */}
@@ -257,6 +271,7 @@ export default function App() {
         <Route path="/*" element={<AuthGate />} />
 
       </Routes>
+      </ChatProvider>
     </AuthProvider>
   )
 }
