@@ -121,15 +121,19 @@ namespace TherapyCenter
             builder.Services.AddSignalR();
 
             // CORS
+             var allowedOrigins = builder.Configuration
+                .GetSection("Cors:AllowedOrigins")
+                .Get<string[]>();
+
             builder.Services.AddCors(options =>
             {
                 options.AddPolicy("AllowFrontend", policy =>
                 {
-                    policy.WithOrigins("http://localhost:5173")
-                          .AllowAnyHeader()
-                          .AllowAnyMethod()
-                          .AllowCredentials();
-                });
+                     policy.WithOrigins(allowedOrigins!)
+                    .AllowAnyHeader()
+                    .AllowAnyMethod()
+                    .AllowCredentials();
+               });
             });
 
             builder.Services.AddControllers()
