@@ -52,11 +52,11 @@ export default function RegisterPage() {
           <div className="form-row">
             <div className="form-group">
               <label>First Name</label>
-              <input value={form.firstName} onChange={set('firstName')} placeholder="Jane" required />
+              <input value={form.firstName} onChange={set('firstName')} placeholder="Rajat" required />
             </div>
             <div className="form-group">
               <label>Last Name</label>
-              <input value={form.lastName} onChange={set('lastName')} placeholder="Doe" required />
+              <input value={form.lastName} onChange={set('lastName')} placeholder="Sharma" required />
             </div>
           </div>
           <div className="form-group">
@@ -69,7 +69,7 @@ export default function RegisterPage() {
           </div>
           <div className="form-group">
             <label>Phone Number</label>
-            <input type="text" value={form.phoneNumber} onChange={set('phoneNumber')} placeholder="+1 555 000 0000" />
+            <input type="text" value={form.phoneNumber} onChange={set('phoneNumber')} placeholder="991555XXXXX" />
           </div>
           <div className="form-group">
             <label>I am a…</label>
