@@ -19,28 +19,40 @@ namespace TherapyCenter.Services.Implementations
 
             var host = smtpSection["Host"]!;
             var port = int.Parse(smtpSection["Port"]!);
-            var senderEmail = smtpSection["Email"]!;
+
+            var smtpLogin = smtpSection["Email"]!;
+            var fromEmail = smtpSection["FromEmail"]!;
+
             var senderPassword = smtpSection["Password"]!;
-            var enableSsl = bool.TryParse(smtpSection["EnableSsl"], out var ssl) ? ssl : true;
+            var enableSsl = bool.TryParse(smtpSection["EnableSsl"], out var ssl)
+                ? ssl
+                : true;
 
             using var client = new SmtpClient(host, port)
             {
-                Credentials = new NetworkCredential(senderEmail, senderPassword),
+                Credentials = new NetworkCredential(
+                    smtpLogin,
+                    senderPassword),
                 EnableSsl = enableSsl
             };
 
             var subject = $"Your OTP for {purpose}";
             var body = $"Your OTP is: {otp}\n\nIt will expire in 5 minutes.";
 
-            using var message = new MailMessage(senderEmail, toEmail, subject, body);
+            using var message = new MailMessage(
+                fromEmail,
+                toEmail,
+                subject,
+                body);
+
             try
             {
                 await client.SendMailAsync(message);
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"SMTP ERROR:{ex}");
+                Console.WriteLine($"SMTP ERROR: {ex}");
                 throw;
             }
-    }
+        }
 }}
