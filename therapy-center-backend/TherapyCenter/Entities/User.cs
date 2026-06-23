@@ -13,6 +13,7 @@ namespace TherapyCenter.Entities
         public string? PhoneNumber { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public bool IsActive { get; set; } = true;
+        public bool IsEmailVerified { get; set; } = false;
 
         // Navigation properties — EF Core uses these to build JOINs
         public Doctor? DoctorProfile { get; set; }

@@ -17,6 +17,7 @@ namespace TherapyCenter.Data
         public DbSet<Payment> Payments => Set<Payment>();
         public DbSet<Slot> Slots => Set<Slot>();
         public DbSet<ChatMessage> ChatMessages => Set<ChatMessage>();
+        public DbSet<OtpVerification> OtpVerifications => Set<OtpVerification>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -141,6 +142,21 @@ namespace TherapyCenter.Data
                 e.HasOne(m => m.Sender)
                  .WithMany()
                  .HasForeignKey(m => m.SenderId)
+                 .OnDelete(DeleteBehavior.Cascade);
+            });
+
+
+            // ── OtpVerification ───────────────────────────────────────────────-
+            modelBuilder.Entity<OtpVerification>(e =>
+            {
+                e.HasKey(o => o.OtpVerificationId);
+                e.Property(o => o.Email).HasMaxLength(100).IsRequired();
+                e.Property(o => o.OtpHash).HasMaxLength(255).IsRequired();
+                e.Property(o => o.Purpose).HasMaxLength(50).IsRequired();
+
+                e.HasOne(o => o.User)
+                 .WithMany()
+                 .HasForeignKey(o => o.UserId)
                  .OnDelete(DeleteBehavior.Cascade);
             });
         }

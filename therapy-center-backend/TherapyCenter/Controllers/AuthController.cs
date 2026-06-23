@@ -67,5 +67,32 @@ namespace TherapyCenter.API.Controllers
                 return BadRequest(new { message = ex.Message });
             }
         }
+        [HttpPost("verify-otp")]
+        [AllowAnonymous]
+        public async Task<IActionResult> VerifyOtp([FromBody] VerifyOtpRequest request)
+        {
+            try
+            {
+                return Ok(await _authService.VerifyOtpAsync(request));
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        [HttpPost("resend-otp")]
+        [AllowAnonymous]
+        public async Task<IActionResult> ResendOtp([FromBody] ResendOtpRequest request)
+        {
+            try
+            {
+                return Ok(await _authService.ResendOtpAsync(request));
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
     }
 }

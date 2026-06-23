@@ -38,6 +38,8 @@ export const auth = {
   login: (body) => request('POST', '/auth/login', body),
   register: (body) => request('POST', '/auth/register', body),
   createStaff: (body) => request('POST', '/auth/create-staff', body),
+  verifyOtp: (body) => request('POST', '/auth/verify-otp', body),
+  resendOtp: (body) => request('POST', '/auth/resend-otp', body),
 }
 
 export const admin = {
@@ -52,6 +54,10 @@ export const admin = {
   createDoctorProfile: (body) => request('POST', '/admin/doctors/profile', body),
   getReceptionists: () => request('GET', '/admin/receptionists'),
   generateSlots: (body) => request('POST', '/admin/slots/generate', body),
+
+  getPatients: () => request('GET', '/admin/patients'),
+  getPatientById: (id) => request('GET', `/admin/patients/${id}`),
+  updatePatient: (id, body) => request('PUT', `/admin/patients/${id}`, body),
 }
 
 export const therapies = {
@@ -83,14 +89,15 @@ export const appointments = {
   getByDate: (date) => request('GET', `/appointment/date/${date}`),
   updateStatus: (id, body) => request('PATCH', `/appointment/${id}/status`, body),
 }
+
 export const payments = {
   getByAppointment: (appointmentId) => request('GET', `/payment/appointment/${appointmentId}`),
   getByPatient: (patientId) => request('GET', `/payment/patient/${patientId}`),
   record: (body) => request('POST', '/payment', body),
   markPaid: (appointmentId, body = {}) => request('PATCH', `/payment/${appointmentId}/paid`, body),
 }
+
 export const findings = {
   getByAppointment: (appointmentId) => request('GET', `/doctor/appointments/${appointmentId}/finding`),
   save: (appointmentId, body) => request('PUT', `/doctor/appointments/${appointmentId}/finding`, body),
-  
 }

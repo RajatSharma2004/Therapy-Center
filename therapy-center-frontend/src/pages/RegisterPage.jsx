@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { auth } from '../api/api'
-import { useAuth } from '../context/AuthContext'
 
 export default function RegisterPage() {
   const [form, setForm] = useState({
@@ -11,23 +10,35 @@ export default function RegisterPage() {
     password: '',
     phoneNumber: '',
     role: 'Patient',
+    gender: '',
+    dateOfBirth: '',
   })
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-  const { login } = useAuth()
   const navigate = useNavigate()
-
-  const ROLE_HOME = { Patient: '/patient', Guardian: '/patient' }
 
   async function handleSubmit(e) {
     e.preventDefault()
     setError('')
     setLoading(true)
+
     try {
-      const data = await auth.register(form)
-      login(data)
-      const role = data.role ?? data.Role
-      navigate(ROLE_HOME[role] || '/')
+      const payload = {
+        ...form,
+        dateOfBirth: form.dateOfBirth || null,
+        gender: form.gender || null,
+        phoneNumber: form.phoneNumber || null,
+      }
+
+      const data = await auth.register(payload)
+
+      navigate('/verify-otp', {
+        state: {
+          email: data.email ?? form.email,
+          purpose: data.purpose ?? 'Register',
+          message: data.message,
+        },
+      })
     } catch (err) {
       setError(err.message)
     } finally {
@@ -59,18 +70,37 @@ export default function RegisterPage() {
               <input value={form.lastName} onChange={set('lastName')} placeholder="Sharma" required />
             </div>
           </div>
+
           <div className="form-group">
             <label>Email</label>
             <input type="email" value={form.email} onChange={set('email')} placeholder="you@example.com" required />
           </div>
+
           <div className="form-group">
             <label>Password</label>
             <input type="password" value={form.password} onChange={set('password')} placeholder="At least 8 characters" required />
           </div>
+
           <div className="form-group">
             <label>Phone Number</label>
             <input type="text" value={form.phoneNumber} onChange={set('phoneNumber')} placeholder="991555XXXXX" />
           </div>
+
+          <div className="form-group">
+            <label>Gender (optional)</label>
+            <select value={form.gender} onChange={set('gender')}>
+              <option value="">Select…</option>
+              <option>Male</option>
+              <option>Female</option>
+              <option>Other</option>
+            </select>
+          </div>
+
+          <div className="form-group">
+            <label>Date of Birth (optional)</label>
+            <input type="date" value={form.dateOfBirth} onChange={set('dateOfBirth')} />
+          </div>
+
           <div className="form-group">
             <label>I am a…</label>
             <select value={form.role} onChange={set('role')}>

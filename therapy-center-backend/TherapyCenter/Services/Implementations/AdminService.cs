@@ -1,6 +1,6 @@
-using Microsoft.EntityFrameworkCore;
 using TherapyCenter.DTO_s.Admin;
 using TherapyCenter.DTO_s.Doctor;
+using TherapyCenter.DTO_s.Patient;
 using TherapyCenter.Entities;
 using TherapyCenter.Repositories.Interfaces;
 using TherapyCenter.Services.Interfaces;
@@ -12,6 +12,7 @@ namespace TherapyCenter.Services.Implementations
         private readonly ITherapyRepository _therapyRepo;
         private readonly IDoctorRepository _doctorRepo;
         private readonly IUserRepository _userRepo;
+        private readonly IPatientRepository _patientRepo;
         private readonly ISlotRepository _slotRepo;
         private readonly IAppointmentRepository _appointmentRepo;
 
@@ -19,17 +20,17 @@ namespace TherapyCenter.Services.Implementations
             ITherapyRepository therapyRepo,
             IDoctorRepository doctorRepo,
             IUserRepository userRepo,
+            IPatientRepository patientRepo,
             ISlotRepository slotRepo,
-             IAppointmentRepository appointmentRepo)
+            IAppointmentRepository appointmentRepo)
         {
             _therapyRepo = therapyRepo;
             _doctorRepo = doctorRepo;
             _userRepo = userRepo;
+            _patientRepo = patientRepo;
             _slotRepo = slotRepo;
             _appointmentRepo = appointmentRepo;
         }
-
-        // ── Therapy CRUD ───────────────────────────────────────────────────────
 
         public async Task<Therapy> CreateTherapyAsync(CreateTherapyRequest request)
         {
@@ -40,9 +41,9 @@ namespace TherapyCenter.Services.Implementations
                 DurationMinutes = request.DurationMinutes,
                 Cost = request.Cost
             };
+
             return await _therapyRepo.CreateAsync(therapy);
         }
-       
 
         public async Task<Therapy> UpdateTherapyAsync(int therapyId, UpdateTherapyRequest request)
         {
@@ -62,8 +63,6 @@ namespace TherapyCenter.Services.Implementations
 
         public async Task<IEnumerable<Therapy>> GetAllTherapiesAsync()
             => await _therapyRepo.GetAllAsync();
-
-        // ── Doctor profile ─────────────────────────────────────────────────────
 
         public async Task<DoctorResponse> CreateDoctorProfileAsync(CreateDoctorProfileRequest request)
         {
@@ -103,25 +102,18 @@ namespace TherapyCenter.Services.Implementations
             var created = await _doctorRepo.CreateAsync(doctor);
             return ToResponse(created);
         }
+
         public async Task DeleteDoctorAsync(int doctorId)
         {
             var appointments = await _appointmentRepo.GetByDoctorIdAsync(doctorId);
-
             if (appointments.Any())
-            {
-                throw new InvalidOperationException(
-                    "Cannot delete doctor with existing appointments."
-                );
-            }
+                throw new InvalidOperationException("Cannot delete doctor with existing appointments.");
 
             await _doctorRepo.DeleteAsync(doctorId);
         }
 
-
         public async Task<IEnumerable<User>> GetAllReceptionistsAsync()
             => await _userRepo.GetByRoleAsync("Receptionist");
-
-        // ── Bulk slot generation ───────────────────────────────────────────────
 
         public async Task<int> GenerateSlotsForDoctorAsync(GenerateSlotsRequest request)
         {
@@ -132,7 +124,7 @@ namespace TherapyCenter.Services.Implementations
                 throw new InvalidOperationException("Doctor has no working hours configured.");
 
             var availableDays = (doctor.AvailableDays ?? "Mon,Tue,Wed,Thu,Fri")
-                                .Split(',', StringSplitOptions.RemoveEmptyEntries);
+                .Split(',', StringSplitOptions.RemoveEmptyEntries);
 
             var slots = new List<Slot>();
             var current = request.FromDate;
@@ -166,6 +158,7 @@ namespace TherapyCenter.Services.Implementations
             await _slotRepo.BulkCreateAsync(slots);
             return slots.Count;
         }
+
         public async Task DeactivateStaffAsync(int userId)
         {
             var user = await _userRepo.GetByIdAsync(userId)
@@ -178,6 +171,47 @@ namespace TherapyCenter.Services.Implementations
             await _userRepo.UpdateAsync(user);
         }
 
+        public async Task<IEnumerable<PatientListResponse>> GetAllPatientsAsync()
+        {
+            var patients = await _patientRepo.GetAllAsync();
+            return patients.Select(ToPatientResponse).ToList();
+        }
+
+        public async Task<PatientListResponse> UpdatePatientAsync(int patientId, UpdatePatientRequest request)
+        {
+            var patient = await _patientRepo.GetByIdAsync(patientId)
+                          ?? throw new KeyNotFoundException($"Patient {patientId} not found.");
+
+            patient.FirstName = request.FirstName.Trim();
+            patient.LastName = request.LastName.Trim();
+            patient.DateOfBirth = request.DateOfBirth;
+            patient.Gender = request.Gender;
+            patient.MedicalHistory = request.MedicalHistory;
+            patient.GuardianId = request.GuardianId;
+
+            if (patient.User != null)
+            {
+                if (!string.IsNullOrWhiteSpace(request.Email))
+                    patient.User.Email = request.Email.Trim();
+
+                if (!string.IsNullOrWhiteSpace(request.PhoneNumber))
+                    patient.User.PhoneNumber = request.PhoneNumber.Trim();
+
+                patient.User.FirstName = patient.FirstName;
+                patient.User.LastName = patient.LastName;
+
+                await _userRepo.UpdateAsync(patient.User);
+            }
+
+            var updated = await _patientRepo.UpdateAsync(patient);
+            return ToPatientResponse(updated);
+        }
+
+        public async Task<PatientListResponse?> GetPatientByIdAsync(int patientId)
+        {
+            var patient = await _patientRepo.GetByIdAsync(patientId);
+            return patient == null ? null : ToPatientResponse(patient);
+        }
 
         private static DoctorResponse ToResponse(Doctor doctor)
         {
@@ -199,6 +233,35 @@ namespace TherapyCenter.Services.Implementations
                 AvailableDays = doctor.AvailableDays,
                 StartTime = doctor.StartTime,
                 EndTime = doctor.EndTime
+            };
+        }
+
+        private static PatientListResponse ToPatientResponse(Patient patient)
+        {
+            var firstName = patient.FirstName ?? patient.User?.FirstName ?? string.Empty;
+            var lastName = patient.LastName ?? patient.User?.LastName ?? string.Empty;
+            var fullName = string.Join(' ', new[] { firstName, lastName }.Where(s => !string.IsNullOrWhiteSpace(s))).Trim();
+
+            return new PatientListResponse
+            {
+                PatientId = patient.PatientId,
+                UserId = patient.UserId,
+                GuardianId = patient.GuardianId,
+                FirstName = firstName,
+                LastName = lastName,
+                FullName = fullName,
+                Email = patient.User?.Email,
+                PhoneNumber = patient.User?.PhoneNumber,
+                DateOfBirth = patient.DateOfBirth,
+                Gender = patient.Gender,
+                MedicalHistory = patient.MedicalHistory,
+                GuardianName = patient.Guardian == null
+                    ? null
+                    : string.Join(' ', new[] { patient.Guardian.FirstName, patient.Guardian.LastName }.Where(s => !string.IsNullOrWhiteSpace(s))).Trim(),
+                CreatedAt = patient.CreatedAt,
+                Status = patient.User == null
+                    ? "Offline"
+                    : (patient.User.IsActive ? "Active" : "Inactive")
             };
         }
     }

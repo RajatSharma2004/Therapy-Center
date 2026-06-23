@@ -102,11 +102,13 @@ namespace TherapyCenter
             builder.Services.AddScoped<IPaymentRepository, PaymentRepository>();
             builder.Services.AddScoped<ISlotRepository, SlotRepository>();
             builder.Services.AddScoped<IChatRepository, ChatRepository>();
+            builder.Services.AddScoped<IOtpVerificationRepository, OtpVerificationRepository>();
 
             // Unit Of Work
             builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
             // Services
+            builder.Services.AddScoped<IEmailService, EmailService>();
             builder.Services.AddScoped<IAuthService, AuthService>();
             builder.Services.AddScoped<IAdminService, AdminService>();
             builder.Services.AddScoped<IAppointmentService, AppointmentService>();

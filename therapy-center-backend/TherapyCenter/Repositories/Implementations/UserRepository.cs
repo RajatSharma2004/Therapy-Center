@@ -12,15 +12,22 @@ namespace TherapyCenter.Repositories.Implementations
 
         public async Task<User?> GetByEmailAsync(string email)
             => await _context.Users.FirstOrDefaultAsync(u => u.Email == email && u.IsActive);
+        public async Task<User?> GetByEmailIncludingInactiveAsync(string email)
+           => await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
 
         public async Task<User?> GetByIdAsync(int userId)
             => await _context.Users.FirstOrDefaultAsync(u => u.UserId == userId && u.IsActive);
+        public async Task<User?> GetByIdIncludingInactiveAsync(int userId)
+           => await _context.Users.FirstOrDefaultAsync(u => u.UserId == userId);
 
         public async Task<IEnumerable<User>> GetByRoleAsync(string role)
             => await _context.Users.Where(u => u.Role == role && u.IsActive).ToListAsync();
 
         public async Task<bool> EmailExistsAsync(string email)
             => await _context.Users.AnyAsync(u => u.Email == email);
+
+        public async Task<bool> EmailExistsVerifiedAsync(string email)
+            => await _context.Users.AnyAsync(u => u.Email == email && u.IsEmailVerified);
 
         public async Task<User> CreateAsync(User user)
         {

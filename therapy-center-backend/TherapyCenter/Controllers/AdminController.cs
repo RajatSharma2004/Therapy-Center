@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TherapyCenter.DTO_s.Admin;
+using TherapyCenter.DTO_s.Patient;
 using TherapyCenter.Services.Interfaces;
 
 
@@ -128,6 +129,30 @@ namespace TherapyCenter.API.Controllers
             catch (Exception ex)
             {
                 return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        [HttpGet("patients")]
+        public async Task<IActionResult> GetPatients()
+            => Ok(await _adminService.GetAllPatientsAsync());
+
+        [HttpGet("patients/{id}")]
+        public async Task<IActionResult> GetPatientById(int id)
+        {
+            var patient = await _adminService.GetPatientByIdAsync(id);
+            return patient == null ? NotFound(new { message = "Patient not found." }) : Ok(patient);
+        }
+
+        [HttpPut("patients/{id}")]
+        public async Task<IActionResult> UpdatePatient(int id, [FromBody] UpdatePatientRequest request)
+        {
+            try
+            {
+                return Ok(await _adminService.UpdatePatientAsync(id, request));
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
             }
         }
     }

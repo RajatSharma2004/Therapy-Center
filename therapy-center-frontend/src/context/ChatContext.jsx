@@ -15,12 +15,9 @@ export function ChatProvider({ children }) {
     if (!user || (user.role !== 'Admin' && user.role !== 'Receptionist')) return
 
     const conn = new signalR.HubConnectionBuilder()
-     .withUrl(
-  `${import.meta.env.VITE_API_BASE_URL.replace('/api', '')}/hubs/chat`,
-  {
-    accessTokenFactory: () => localStorage.getItem('token')
-  }
-)
+    .withUrl('/hubs/chat', {
+     accessTokenFactory: () => localStorage.getItem('token')
+    })
       .withAutomaticReconnect()
       .build()
 
