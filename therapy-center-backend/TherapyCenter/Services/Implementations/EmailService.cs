@@ -33,8 +33,14 @@ namespace TherapyCenter.Services.Implementations
             var body = $"Your OTP is: {otp}\n\nIt will expire in 5 minutes.";
 
             using var message = new MailMessage(senderEmail, toEmail, subject, body);
-
-            await client.SendMailAsync(message);
-        }
+            try
+            {
+                await client.SendMailAsync(message);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"SMTP ERROR:{ex}");
+                throw;
+            }
     }
-}
+}}
