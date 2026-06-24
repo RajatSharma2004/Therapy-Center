@@ -14,12 +14,17 @@ export function ChatProvider({ children }) {
   useEffect(() => {
     if (!user || (user.role !== 'Admin' && user.role !== 'Receptionist')) return
 
-    const conn = new signalR.HubConnectionBuilder()
-    .withUrl('/hubs/chat', {
-     accessTokenFactory: () => localStorage.getItem('token')
-    })
-      .withAutomaticReconnect()
-      .build()
+   const apiBaseUrl = import.meta.env.VITE_API_BASE_URL
+
+const conn = new signalR.HubConnectionBuilder()
+  .withUrl(
+    `${apiBaseUrl.replace('/api', '')}/hubs/chat`,
+    {
+      accessTokenFactory: () => localStorage.getItem('token')
+    }
+  )
+  .withAutomaticReconnect()
+  .build()
 
     conn.on('ReceiveMessage', (msg) => {
       setMessages((prev) => [...prev, msg])
