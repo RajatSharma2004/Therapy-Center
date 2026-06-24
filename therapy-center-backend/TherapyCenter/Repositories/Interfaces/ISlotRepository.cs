@@ -1,4 +1,4 @@
-﻿using TherapyCenter.Entities;
+using TherapyCenter.Entities;
 
 namespace TherapyCenter.Repositories.Interfaces
 {

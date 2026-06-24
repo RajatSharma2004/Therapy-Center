@@ -1,4 +1,4 @@
-﻿using TherapyCenter.Data;
+using TherapyCenter.Data;
 using TherapyCenter.Entities;
 using TherapyCenter.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;

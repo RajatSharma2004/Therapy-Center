@@ -123,8 +123,13 @@ namespace TherapyCenter.API.Controllers
         {
             try
             {
-                var count = await _adminService.GenerateSlotsForDoctorAsync(request);
-                return Ok(new { message = $"{count} slots generated successfully." });
+                var result = await _adminService.GenerateSlotsForDoctorAsync(request);
+                var message = $"{result.Created} slots generated successfully.";
+                if (result.Skipped > 0)
+                {
+                    message += $" Skipped {result.Skipped} day(s) that already had slots.";
+                }
+                return Ok(new { message });
             }
             catch (Exception ex)
             {

@@ -14,7 +14,7 @@ namespace TherapyCenter.Services.Interfaces
 
         Task<DoctorResponse> CreateDoctorProfileAsync(CreateDoctorProfileRequest request);
         Task<IEnumerable<User>> GetAllReceptionistsAsync();
-        Task<int> GenerateSlotsForDoctorAsync(GenerateSlotsRequest request);
+        Task<(int Created, int Skipped)> GenerateSlotsForDoctorAsync(GenerateSlotsRequest request);
         Task DeleteDoctorAsync(int doctorId);
         Task DeactivateStaffAsync(int userId);
 

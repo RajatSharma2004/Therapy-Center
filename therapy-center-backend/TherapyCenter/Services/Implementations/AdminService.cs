@@ -115,7 +115,7 @@ namespace TherapyCenter.Services.Implementations
         public async Task<IEnumerable<User>> GetAllReceptionistsAsync()
             => await _userRepo.GetByRoleAsync("Receptionist");
 
-        public async Task<int> GenerateSlotsForDoctorAsync(GenerateSlotsRequest request)
+        public async Task<(int Created, int Skipped)> GenerateSlotsForDoctorAsync(GenerateSlotsRequest request)
         {
             var doctor = await _doctorRepo.GetByIdAsync(request.DoctorId)
                          ?? throw new KeyNotFoundException("Doctor not found.");
@@ -126,7 +126,18 @@ namespace TherapyCenter.Services.Implementations
             var availableDays = (doctor.AvailableDays ?? "Mon,Tue,Wed,Thu,Fri")
                 .Split(',', StringSplitOptions.RemoveEmptyEntries);
 
+            // ── Duplicate guard ────────────────────────────────────────────────
+            // Fetch every date in the requested range that already has slots
+            // in ONE query instead of one query per day.
+            var existingSlots = await _slotRepo.GetSlotsByDoctorAsync(request.DoctorId);
+            var datesAlreadyGenerated = existingSlots
+                .Where(s => s.Date >= request.FromDate && s.Date <= request.ToDate)
+                .Select(s => s.Date)
+                .ToHashSet();   // O(1) lookups
+            // ──────────────────────────────────────────────────────────────────
+
             var slots = new List<Slot>();
+            var skipped = 0;
             var current = request.FromDate;
 
             while (current <= request.ToDate)
@@ -135,6 +146,14 @@ namespace TherapyCenter.Services.Implementations
 
                 if (availableDays.Contains(dayAbbr, StringComparer.OrdinalIgnoreCase))
                 {
+                    // Skip this day entirely if slots already exist
+                    if (datesAlreadyGenerated.Contains(current))
+                    {
+                        skipped++;
+                        current = current.AddDays(1);
+                        continue;
+                    }
+
                     var slotStart = doctor.StartTime.Value;
 
                     while (slotStart.AddHours(1) <= doctor.EndTime.Value)
@@ -155,8 +174,12 @@ namespace TherapyCenter.Services.Implementations
                 current = current.AddDays(1);
             }
 
-            await _slotRepo.BulkCreateAsync(slots);
-            return slots.Count;
+            if (slots.Count > 0)
+            {
+                await _slotRepo.BulkCreateAsync(slots);
+            }
+
+            return (slots.Count, skipped);
         }
 
         public async Task DeactivateStaffAsync(int userId)
