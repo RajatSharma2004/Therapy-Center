@@ -19,6 +19,13 @@ export default function GenerateSlots() {
     setSaving(true)
     setError('')
     setSuccess('')
+
+    if (form.toDate < form.fromDate) {
+      setError('End date cannot be before start date.')
+      setSaving(false)
+      return
+    }
+
     try {
       const body = {
         doctorId: Number(form.doctorId),

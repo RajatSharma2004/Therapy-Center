@@ -69,7 +69,7 @@ export default function ManageDoctors() {
       const result = await auth.createStaff({ ...accForm, role: 'Doctor' })
       const userId = result.userId ?? result.UserId
 
-      setSuccess(`Doctor account created. UserId: ${userId}. Now create their profile.`)
+      setSuccess(`Doctor account created successfully. Now fill in the profile details.`)
       setProfileForm({ ...PROFILE_EMPTY, userId })
       setShowAccModal(false)
       setShowProfileModal(true)
@@ -299,10 +299,6 @@ export default function ManageDoctors() {
             <label>Phone</label>
             <input value={accForm.phoneNumber} onChange={setA('phoneNumber')} />
           </div>
-
-          <div className="alert alert-info">
-            After creating the account you'll be prompted to fill in the doctor profile details.
-          </div>
         </Modal>
       )}
 
@@ -328,8 +324,8 @@ export default function ManageDoctors() {
           {error && <div className="alert alert-error">{error}</div>}
 
           <div className="form-group">
-            <label>User ID *</label>
-            <input type="number" value={profileForm.userId} onChange={setP('userId')} />
+            <label>User ID</label>
+            <input type="number" value={profileForm.userId} readOnly style={{ background: 'var(--bg-secondary)', cursor: 'not-allowed' }} />
           </div>
 
           <div className="form-group">

@@ -1,4 +1,4 @@
-﻿using TherapyCenter.DTO_s.Auth;
+using TherapyCenter.DTO_s.Auth;
 
 namespace TherapyCenter.Services.Interfaces
 {
@@ -8,7 +8,7 @@ namespace TherapyCenter.Services.Interfaces
 
         Task<AuthResponse> LoginAsync(LoginRequest request);
 
-        Task<OtpStartResponse> CreateStaffAccountAsync(RegisterRequest request);
+        Task<AuthResponse> CreateStaffAccountAsync(RegisterRequest request);
 
         Task<AuthResponse> VerifyOtpAsync(VerifyOtpRequest request);
 

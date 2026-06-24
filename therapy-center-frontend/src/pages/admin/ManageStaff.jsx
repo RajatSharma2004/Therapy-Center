@@ -28,10 +28,10 @@ export default function ManageStaff() {
     setSaving(true)
     setError('')
     try {
-      await auth.createStaff(form)
-      setSuccess('Staff account created successfully.')
+      const result = await auth.createStaff(form)
+      setSuccess(`Staff account created. ${result.fullName ?? ''} is now active and can log in immediately.`)
       setShowModal(false)
-      load()
+      await load()
     } catch (e) {
       setError(e.message)
     } finally {

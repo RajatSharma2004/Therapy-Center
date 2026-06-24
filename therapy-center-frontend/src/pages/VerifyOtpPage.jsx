@@ -72,10 +72,7 @@ export default function VerifyOtpPage() {
             <input value={email} onChange={e => setEmail(e.target.value)} required />
           </div>
 
-          <div className="form-group">
-            <label>Purpose</label>
-            <input value={purpose} onChange={e => setPurpose(e.target.value)} required />
-          </div>
+          <input type="hidden" value={purpose} />
 
           <div className="form-group">
             <label>OTP</label>

@@ -2,15 +2,6 @@ import { useEffect, useMemo, useState } from 'react'
 import { admin } from '../../api/api'
 import Modal from '../../components/Modal'
 
-const EMPTY_CREATE = {
-  firstName: '',
-  lastName: '',
-  dateOfBirth: '',
-  gender: '',
-  medicalHistory: '',
-  guardianId: '',
-}
-
 const EMPTY_EDIT = {
   patientId: null,
   firstName: '',
@@ -26,9 +17,7 @@ const EMPTY_EDIT = {
 export default function AdminPatients() {
   const [list, setList] = useState([])
   const [loading, setLoading] = useState(true)
-  const [showCreate, setShowCreate] = useState(false)
   const [showEdit, setShowEdit] = useState(false)
-  const [createForm, setCreateForm] = useState(EMPTY_CREATE)
   const [editForm, setEditForm] = useState(EMPTY_EDIT)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
@@ -51,35 +40,6 @@ export default function AdminPatients() {
     }
   }
 
-  async function handleCreate() {
-    setSaving(true)
-    setError('')
-    try {
-      const body = {
-        ...createForm,
-        dateOfBirth: createForm.dateOfBirth || null,
-        guardianId: createForm.guardianId ? Number(createForm.guardianId) : null,
-      }
-      await admin.createTherapy // dummy line removed below
-    } catch {}
-    try {
-      const body = {
-        ...createForm,
-        dateOfBirth: createForm.dateOfBirth || null,
-        guardianId: createForm.guardianId ? Number(createForm.guardianId) : null,
-      }
-
-      await admin.createPatient ? await admin.createPatient(body) : await fetch('/api/patient', { method: 'POST' }) 
-      setSuccess('Patient created.')
-      setShowCreate(false)
-      await load()
-    } catch (e) {
-      setError(e.message)
-    } finally {
-      setSaving(false)
-    }
-  }
-
   async function handleEditSave() {
     setSaving(true)
     setError('')
@@ -96,7 +56,7 @@ export default function AdminPatients() {
       }
 
       await admin.updatePatient(editForm.patientId, body)
-      setSuccess('Patient updated.')
+      setSuccess('Patient updated successfully.')
       setShowEdit(false)
       await load()
     } catch (e) {
@@ -119,11 +79,8 @@ export default function AdminPatients() {
       guardianId: patient.guardianId ?? '',
     })
     setError('')
+    setSuccess('')
     setShowEdit(true)
-  }
-
-  function setCreate(field) {
-    return e => setCreateForm({ ...createForm, [field]: e.target.value })
   }
 
   function setEdit(field) {
@@ -141,21 +98,11 @@ export default function AdminPatients() {
 
   return (
     <div>
-      <div className="page-header flex-between">
+      <div className="page-header">
         <div>
           <h1>Patients</h1>
           <p>View and update patient records</p>
         </div>
-        <button
-          className="btn btn-primary"
-          onClick={() => {
-            setCreateForm(EMPTY_CREATE)
-            setError('')
-            setShowCreate(true)
-          }}
-        >
-          + New Patient
-        </button>
       </div>
 
       {error && <div className="alert alert-error">{error}</div>}
@@ -203,10 +150,14 @@ export default function AdminPatients() {
                     <td>{p.phoneNumber || '—'}</td>
                     <td>{p.dateOfBirth ? new Date(p.dateOfBirth).toLocaleDateString() : 'Not Provided'}</td>
                     <td>{p.gender || 'Not Provided'}</td>
-                    <td>{p.status || '—'}</td>
+                    <td>
+                      <span className={`badge ${p.status === 'Active' ? 'badge-green' : p.status === 'Inactive' ? 'badge-red' : 'badge-gray'}`}>
+                        {p.status || '—'}
+                      </span>
+                    </td>
                     <td className="text-muted">{new Date(p.createdAt).toLocaleDateString()}</td>
                     <td>
-                      <button className="btn btn-secondary" onClick={() => openEdit(p)}>
+                      <button className="btn btn-secondary btn-sm" onClick={() => openEdit(p)}>
                         Edit
                       </button>
                     </td>
@@ -217,62 +168,6 @@ export default function AdminPatients() {
           )}
         </div>
       </div>
-
-      {showCreate && (
-        <Modal
-          title="New Patient"
-          onClose={() => setShowCreate(false)}
-          footer={
-            <>
-              <button className="btn btn-secondary" onClick={() => setShowCreate(false)}>
-                Cancel
-              </button>
-              <button className="btn btn-primary" onClick={handleCreate} disabled={saving}>
-                {saving ? 'Saving…' : 'Create'}
-              </button>
-            </>
-          }
-        >
-          {error && <div className="alert alert-error">{error}</div>}
-
-          <div className="form-row">
-            <div className="form-group">
-              <label>First Name *</label>
-              <input value={createForm.firstName} onChange={setCreate('firstName')} />
-            </div>
-            <div className="form-group">
-              <label>Last Name *</label>
-              <input value={createForm.lastName} onChange={setCreate('lastName')} />
-            </div>
-          </div>
-
-          <div className="form-row">
-            <div className="form-group">
-              <label>Date of Birth</label>
-              <input type="date" value={createForm.dateOfBirth} onChange={setCreate('dateOfBirth')} />
-            </div>
-            <div className="form-group">
-              <label>Gender</label>
-              <select value={createForm.gender} onChange={setCreate('gender')}>
-                <option value="">Select…</option>
-                <option>Male</option>
-                <option>Female</option>
-                <option>Other</option>
-              </select>
-            </div>
-          </div>
-
-          <div className="form-group">
-            <label>Guardian ID (optional)</label>
-            <input type="number" value={createForm.guardianId} onChange={setCreate('guardianId')} />
-          </div>
-
-          <div className="form-group">
-            <label>Medical History</label>
-            <textarea value={createForm.medicalHistory} onChange={setCreate('medicalHistory')} />
-          </div>
-        </Modal>
-      )}
 
       {showEdit && (
         <Modal
@@ -304,7 +199,7 @@ export default function AdminPatients() {
 
           <div className="form-group">
             <label>Email</label>
-            <input value={editForm.email} onChange={setEdit('email')} />
+            <input type="email" value={editForm.email} onChange={setEdit('email')} />
           </div>
 
           <div className="form-group">
@@ -329,13 +224,13 @@ export default function AdminPatients() {
           </div>
 
           <div className="form-group">
-            <label>Guardian ID</label>
-            <input type="number" value={editForm.guardianId} onChange={setEdit('guardianId')} />
+            <label>Guardian User ID</label>
+            <input type="number" value={editForm.guardianId} onChange={setEdit('guardianId')} placeholder="Optional" />
           </div>
 
           <div className="form-group">
             <label>Medical History</label>
-            <textarea value={editForm.medicalHistory} onChange={setEdit('medicalHistory')} />
+            <textarea value={editForm.medicalHistory} onChange={setEdit('medicalHistory')} rows={4} />
           </div>
         </Modal>
       )}

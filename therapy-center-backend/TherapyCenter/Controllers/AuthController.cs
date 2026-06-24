@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TherapyCenter.DTO_s.Auth;
 using TherapyCenter.Services.Interfaces;
@@ -52,7 +52,7 @@ namespace TherapyCenter.API.Controllers
         }
 
         // POST api/auth/create-staff
-        // Admin only — creates Receptionist or Doctor user accounts
+        // Admin only — creates Receptionist or Doctor user accounts (immediately active, no OTP)
         [HttpPost("create-staff")]
         [Authorize(Policy = "AdminOnly")]
         public async Task<IActionResult> CreateStaff([FromBody] RegisterRequest request)

@@ -1,11 +1,17 @@
 import { useState } from 'react'
-import { appointments } from '../../api/api'
+import { appointments, payments } from '../../api/api'
 import { doctorName, patientName, therapyName } from '../../utils/display'
 
 const STATUS_OPTIONS = ['Scheduled', 'Completed', 'Cancelled']
 
 function statusBadge(status) {
   const map = { Scheduled: 'badge-blue', Completed: 'badge-green', Cancelled: 'badge-red' }
+  return <span className={`badge ${map[status] || 'badge-gray'}`}>{status}</span>
+}
+
+function paymentBadge(payment) {
+  const status = payment?.status ?? payment?.Status ?? 'Pending'
+  const map = { Pending: 'badge-yellow', Paid: 'badge-green', Failed: 'badge-red', Refunded: 'badge-gray' }
   return <span className={`badge ${map[status] || 'badge-gray'}`}>{status}</span>
 }
 
@@ -16,6 +22,7 @@ export default function StaffAppointments() {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [searched, setSearched] = useState(false)
+  const [updatingId, setUpdatingId] = useState(null)
 
   async function load() {
     setLoading(true)
@@ -37,6 +44,20 @@ export default function StaffAppointments() {
       load()
     } catch (e) {
       setError(e.message)
+    }
+  }
+
+  async function markPaid(id) {
+    setUpdatingId(id)
+    setError('')
+    try {
+      await payments.markPaid(id, { transactionId: null })
+      setSuccess(`Payment for appointment #${id} marked as Paid.`)
+      load()
+    } catch (e) {
+      setError(e.message)
+    } finally {
+      setUpdatingId(null)
     }
   }
 

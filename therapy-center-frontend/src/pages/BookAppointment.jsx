@@ -223,6 +223,7 @@ export default function BookAppointment({ isOnline = false }) {
                   <input
                     type="date"
                     value={date}
+                    min={new Date().toISOString().slice(0, 10)}
                     onChange={e => { setDate(e.target.value); setForm(prev => ({ ...prev, slotId: '' })) }}
                     required
                   />

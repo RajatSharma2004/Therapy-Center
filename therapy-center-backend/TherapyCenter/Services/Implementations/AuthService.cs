@@ -1,4 +1,4 @@
-﻿using System.IdentityModel.Tokens.Jwt;
+using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
@@ -56,12 +56,30 @@ namespace TherapyCenter.Services.Implementations
             return await CreatePendingUserAsync(request, "Register");
         }
 
-        public async Task<OtpStartResponse> CreateStaffAccountAsync(RegisterRequest request)
+        public async Task<AuthResponse> CreateStaffAccountAsync(RegisterRequest request)
         {
             if (!AllowedOtpRoles.Contains(request.Role))
-                throw new InvalidOperationException("Invalid role for OTP registration.");
+                throw new InvalidOperationException("Invalid role for staff creation.");
 
-            return await CreatePendingUserAsync(request, "StaffCreate");
+            var existingUser = await _userRepo.GetByEmailIncludingInactiveAsync(request.Email);
+            if (existingUser != null)
+                throw new InvalidOperationException("Email is already registered.");
+
+            var user = new User
+            {
+                FirstName = request.FirstName.Trim(),
+                LastName  = request.LastName.Trim(),
+                Email     = request.Email.Trim(),
+                Role      = request.Role.Trim(),
+                PhoneNumber = request.PhoneNumber?.Trim(),
+                IsActive        = true,   // immediately active — no OTP needed
+                IsEmailVerified = true
+            };
+
+            user.PasswordHash = _hasher.HashPassword(user, request.Password);
+            await _userRepo.CreateAsync(user);
+
+            return BuildAuthResponse(user);
         }
 
         public async Task<AuthResponse> LoginAsync(LoginRequest request)
